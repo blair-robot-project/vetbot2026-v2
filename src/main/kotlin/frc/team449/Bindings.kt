@@ -16,6 +16,7 @@ class Bindings(
         driver.b().onFalse((manip.stopRoller()))
 
         driver.x().onTrue(manip.setAngle(ManipConstants.MAX_ANGLE_RADS))
+
     }
 
 }
