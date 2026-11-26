@@ -1,6 +1,5 @@
 package frc.team449.manip
 
-import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.team449.Constants.ManipConstants
