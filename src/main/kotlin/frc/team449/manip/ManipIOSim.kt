@@ -3,37 +3,52 @@ package frc.team449.manip
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.math.util.Units
-import edu.wpi.first.wpilibj.simulation.DCMotorSim
+import edu.wpi.first.wpilibj.simulation.FlywheelSim
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import frc.team449.Constants
 import frc.team449.Constants.ManipConstants
+import org.littletonrobotics.junction.Logger
 
 class ManipIOSim : ManipIOHardware() {
-    private val rollSim: DCMotorSim =
-        DCMotorSim(
-            LinearSystemId.createDCMotorSystem(
+    private val rollSim: FlywheelSim =
+        FlywheelSim(
+            LinearSystemId.createFlywheelSystem(
                 DCMotor.getKrakenX44(1),
                 ManipConstants.ROLL_MOI_KG_MM, // moI, idk
                 ManipConstants.ROLL_GEARING, // gearing... idk
             ),
-            DCMotor.getKrakenX60(1)
+            DCMotor.getKrakenX44(1)
         )
 
-    private val turnSim: DCMotorSim =
-        DCMotorSim(
-            LinearSystemId.createDCMotorSystem(
-                DCMotor.getKrakenX44(1),
-                ManipConstants.TURN_MOI_KG_MM, // moI, idk
-                ManipConstants.TURN_GEARING, // gearing... idk
-            ),
-            DCMotor.getKrakenX60(1)
+    private val wristSim: SingleJointedArmSim =
+        SingleJointedArmSim(
+            DCMotor.getKrakenX44(1),
+            ManipConstants.WRIST_GEARING,
+            ManipConstants.WRIST_MOI_KG_MM,
+            ManipConstants.ARM_LENGTH_METERS,
+            ManipConstants.MIN_ANGLE_RADS,
+            ManipConstants.MAX_ANGLE_RADS,
+            true,
+            ManipConstants.MIN_ANGLE_RADS,
         )
 
     private val rollMotorSim = rollMotor.simState
-    private val turnMotorSim = turnMotor.simState
+    private val wristMotorSim = wristMotor.simState
+    private var rollTargetVelocity = 0.0
     init {
-        turnMotorSim.setRawRotorPosition(
-            Units.radiansToRotations(ManipConstants.MIN_ANGLE_RADS) * ManipConstants.TURN_GEARING
+        wristMotorSim.setRawRotorPosition(
+            Units.radiansToRotations(ManipConstants.MIN_ANGLE_RADS) * ManipConstants.WRIST_GEARING
         )
+    }
+
+    override fun setRollVelocity(radsPerSecond: Double) {
+        rollTargetVelocity = radsPerSecond
+        super.setRollVelocity(radsPerSecond)
+    }
+
+    override fun setRollVoltage(voltage: Double) {
+        rollTargetVelocity = 0.0
+        super.setRollVoltage(voltage)
     }
 
     override fun updateInputs(inputs: ManipIO.ManipIOInputs) {
@@ -47,15 +62,17 @@ class ManipIOSim : ManipIOHardware() {
         val rollRotorRps = Units.radiansToRotations(rollSim.angularVelocityRadPerSec) * ManipConstants.ROLL_GEARING
         rollMotorSim.setRotorVelocity(rollRotorRps)
         rollMotorSim.addRotorPosition(rollRotorRps * Constants.LOOP_TIME)
-        // turn pivot
-        turnMotorSim.setSupplyVoltage(12.0)
-        turnSim.setInput(turnMotorSim.motorVoltage)
-        turnSim.update(Constants.LOOP_TIME)
-        turnMotorSim.setRawRotorPosition(
-            Units.radiansToRotations(turnSim.angularPositionRad) * ManipConstants.TURN_GEARING,
+        Logger.recordOutput("ManipSim roll speed", rollTargetVelocity)
+
+        // wrist
+        wristMotorSim.setSupplyVoltage(12.0)
+        wristSim.setInput(wristMotorSim.motorVoltage)
+        wristSim.update(Constants.LOOP_TIME)
+        wristMotorSim.setRawRotorPosition(
+            Units.radiansToRotations(wristSim.angleRads) * ManipConstants.WRIST_GEARING,
         )
-        turnMotorSim.setRotorVelocity(
-            Units.radiansToRotations(turnSim.angularVelocityRadPerSec) * ManipConstants.TURN_GEARING,
+        wristMotorSim.setRotorVelocity(
+            Units.radiansToRotations(wristSim.velocityRadPerSec) * ManipConstants.WRIST_GEARING,
         )
     }
 }

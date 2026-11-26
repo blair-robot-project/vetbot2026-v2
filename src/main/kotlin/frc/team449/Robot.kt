@@ -18,7 +18,6 @@ class Robot : LoggedRobot() {
 
         Logger.start()
         robotContainer.bindings.robotContainer.bindings.bindControls()
-
     }
 
     override fun robotInit() {}

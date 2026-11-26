@@ -12,20 +12,22 @@ interface ManipIO {
 
         @JvmField var rollMotorVelocity = 0.0
 
-        @JvmField var turnMotorVoltage = 0.0
+        @JvmField var wristMotorVoltage = 0.0
 
-        @JvmField var turnMotorVelocity = 0.0
+        @JvmField var wristMotorVelocity = 0.0
 
-        @JvmField var turnMotorAngle = Rotation2d()
+        @JvmField var wristMotorAngle = Rotation2d()
     }
 
     fun updateInputs(inputs: ManipIOInputs) {}
 
     fun setRollVoltage(voltage: Double) {}
 
-    fun setTurnVoltage(voltage: Double) {}
+    fun setWristVoltage(voltage: Double) {}
 
-    fun setTurnVelocity(radsPerSecond: Double) {}
+    fun setWristVelocity(radsPerSecond: Double) {}
+
+    fun setWristAngle(angleRads: Double) {}
 
     fun setRollVelocity(radsPerSecond: Double) {}
 }

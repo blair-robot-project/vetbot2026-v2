@@ -4,43 +4,47 @@ import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.configs.Slot0Configs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.PositionVoltage
 import com.ctre.phoenix6.controls.VelocityVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
+import com.ctre.phoenix6.signals.GravityTypeValue
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.units.Units
 import frc.team449.Constants.ManipConstants
 
 open class ManipIOHardware : ManipIO {
+
     val rollMotor = TalonFX(ManipConstants.ROLL_ID, CANBus())
-    val turnMotor = TalonFX(ManipConstants.TURN_ID, CANBus())
+    val wristMotor = TalonFX(ManipConstants.WRIST_ID, CANBus())
 
     private val rollVelocityRequest = VelocityVoltage(0.0)
-    private val turnVelocityRequest = VelocityVoltage(0.0)
+    private val wristVelocityRequest = VelocityVoltage(0.0)
     private val rollVoltageRequest = VoltageOut(0.0)
-    private val turnVoltageRequest = VoltageOut(0.0)
+    private val wristVoltageRequest = VoltageOut(0.0)
+    private val wristPositionRequest = PositionVoltage(0.0)
 
     private val rollVoltage = rollMotor.motorVoltage
     private val rollPosition = rollMotor.position
     private val rollVelocity = rollMotor.velocity
 
-    private val turnVoltage = turnMotor.motorVoltage
-    private val turnPosition = turnMotor.position
-    private val turnVelocity = turnMotor.velocity
+    private val wristVoltage = wristMotor.motorVoltage
+    private val wristPosition = wristMotor.position
+    private val wristVelocity = wristMotor.velocity
 
     private val manipSignals =
         arrayOf(
             rollVoltage,
             rollPosition,
             rollVelocity,
-            turnVoltage,
-            turnPosition,
-            turnVelocity,
+            wristVoltage,
+            wristPosition,
+            wristVelocity,
         )
 
     init {
         rollMotor.configurator.apply(rollMotorConfig)
-        turnMotor.configurator.apply(turnMotorConfig)
+        wristMotor.configurator.apply(wristMotorConfig)
     }
 
     override fun updateInputs(inputs: ManipIO.ManipIOInputs) {
@@ -50,23 +54,27 @@ open class ManipIOHardware : ManipIO {
         inputs.rollMotorPosition = rollPosition.value.`in`(Units.Radians)
         inputs.rollMotorVelocity = rollVelocity.value.`in`(Units.RadiansPerSecond)
 
-        inputs.turnMotorAngle = Rotation2d(turnPosition.value.`in`(Units.Radians))
-        inputs.turnMotorVelocity = turnVelocity.value.`in`(Units.RadiansPerSecond)
-        inputs.turnMotorVoltage = turnVoltage.value.`in`(Units.Volts)
+        inputs.wristMotorAngle = Rotation2d(wristPosition.value.`in`(Units.Radians))
+        inputs.wristMotorVelocity = wristVelocity.value.`in`(Units.RadiansPerSecond)
+        inputs.wristMotorVoltage = wristVoltage.value.`in`(Units.Volts)
     }
 
     override fun setRollVoltage(voltage: Double) {
         rollMotor.setControl(rollVoltageRequest.withOutput(voltage))
     }
 
-    override fun setTurnVoltage(voltage: Double) {
-        turnMotor.setControl(turnVoltageRequest.withOutput(voltage))
+    override fun setWristVoltage(voltage: Double) {
+        wristMotor.setControl(wristVoltageRequest.withOutput(voltage))
     }
 
-    override fun setTurnVelocity(radsPerSecond: Double) {
-        turnMotor.setControl(
-            turnVelocityRequest.withVelocity(radsPerSecond / (2 * Math.PI)),
+    override fun setWristVelocity(radsPerSecond: Double) {
+        wristMotor.setControl(
+            wristVelocityRequest.withVelocity(radsPerSecond / (2 * Math.PI)),
         )
+    }
+
+    override fun setWristAngle(angleRads: Double) {
+        wristMotor.setControl(wristPositionRequest.withPosition(angleRads / (2 * Math.PI)))
     }
 
     override fun setRollVelocity(radsPerSecond: Double) {
@@ -84,14 +92,17 @@ open class ManipIOHardware : ManipIO {
                 kS = ManipConstants.ROLL_KS
                 kV = ManipConstants.ROLL_KV
             }
-        val turnSlot0Configs =
+        val wristSlot0Configs =
             Slot0Configs().apply {
-                kP = ManipConstants.TURN_KP
-                kI = ManipConstants.TURN_KI
-                kD = ManipConstants.TURN_KD
-                kS = ManipConstants.TURN_KS
-                kV = ManipConstants.TURN_KV
+                kP = ManipConstants.WRIST_KP
+                kI = ManipConstants.WRIST_KI
+                kD = ManipConstants.WRIST_KD
+                kS = ManipConstants.WRIST_KS
+                kV = ManipConstants.WRIST_KV
+                kG = ManipConstants.WRIST_KG
+                GravityType = GravityTypeValue.Arm_Cosine
             }
+
         val rollMotorConfig =
             TalonFXConfiguration().apply {
                 CurrentLimits.apply {
@@ -104,17 +115,20 @@ open class ManipIOHardware : ManipIO {
                 }
                 Slot0 = rollSlot0Configs
             }
-        val turnMotorConfig =
+        val wristMotorConfig =
             TalonFXConfiguration().apply {
                 CurrentLimits.apply {
-                    SupplyCurrentLimit = ManipConstants.TURN_SUPPLY_LIMIT
-                    StatorCurrentLimit = ManipConstants.TURN_STATOR_LIMIT
+                    SupplyCurrentLimit = ManipConstants.WRIST_SUPPLY_LIMIT
+                    StatorCurrentLimit = ManipConstants.WRIST_STATOR_LIMIT
                 }
                 MotorOutput.apply {
-                    Inverted = ManipConstants.TURN_INVERSION
+                    Inverted = ManipConstants.WRIST_INVERSION
                     NeutralMode = ManipConstants.NEUTRAL_MODE
                 }
-                Slot0 = turnSlot0Configs
+                Feedback.apply {
+                    SensorToMechanismRatio = ManipConstants.WRIST_GEARING
+                }
+                Slot0 = wristSlot0Configs
             }
     }
 }

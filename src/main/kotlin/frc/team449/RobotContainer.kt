@@ -12,7 +12,6 @@ import frc.team449.manip.ManipIOSubsystem
 class RobotContainer {
     // The container for the robot. Contains subsystems, OI devices, and commands.
     val driverController: CommandXboxController = CommandXboxController(0)
-    val manipulator : ManipIOSubsystem = ManipIOSubsystem(ManipIOSim())
-    val bindings=Bindings(this)
-
+    val manipulator: ManipIOSubsystem = ManipIOSubsystem(ManipIOSim())
+    val bindings = Bindings(this)
 }

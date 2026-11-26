@@ -2,11 +2,11 @@ package frc.team449
 import frc.team449.Constants.ManipConstants
 
 class Bindings(
-    val robotContainer: RobotContainer,
-){
+    val robotContainer: RobotContainer
+) {
     val driver = robotContainer.driverController
 
-    fun bindControls(){
+    fun bindControls() {
         val manip = robotContainer.manipulator
 
         driver.a().whileTrue(manip.grabPiece(ManipConstants.ROLL_SPEED))
@@ -16,7 +16,6 @@ class Bindings(
         driver.b().onFalse((manip.stopRoller()))
 
         driver.x().onTrue(manip.setAngle(ManipConstants.MAX_ANGLE_RADS))
-
+        driver.y().onTrue(manip.setAngle(ManipConstants.MIN_ANGLE_RADS))
     }
-
 }

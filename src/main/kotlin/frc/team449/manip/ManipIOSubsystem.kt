@@ -10,28 +10,18 @@ class ManipIOSubsystem(
     private val io: ManipIO
 ) : SubsystemBase() {
     private val inputs: ManipIOInputsAutoLogged = ManipIOInputsAutoLogged()
-    private val turnController: PIDController = PIDController(
-        ManipConstants.TURN_KP_CONTROLLER,
-        ManipConstants.TURN_KI_CONTROLLER,
-        ManipConstants.TURN_KD_CONTROLLER,
-    )
 
-    private var turnSetpointInitilized = false
+    var wristTargetRads: Double = 0.0
     override fun periodic() {
         io.updateInputs(inputs)
-        if (!turnSetpointInitilized) {
-            turnController.setpoint = inputs.turnMotorAngle.radians
-            turnSetpointInitilized = true
-        }
-        io.setTurnVoltage(turnController.calculate(inputs.turnMotorAngle.radians))
 
         Logger.processInputs("Manipulator", inputs)
-        Logger.recordOutput("Manipulator/TurnSetpoint", turnController.setpoint)
+        Logger.recordOutput("Manipulator/WristTarget", wristTargetRads)
     }
 
     fun setMotorVoltage(voltage: Double): Command =
-        runOnce {
-            io.setRollVelocity(voltage)
+        run {
+            io.setRollVoltage(voltage)
         }
 
     fun grabPiece(radsPerSecond: Double): Command =
@@ -40,16 +30,17 @@ class ManipIOSubsystem(
         }
 
     fun ejectPiece(radsPerSecond: Double): Command =
-        runOnce {
+        run {
             io.setRollVelocity(-radsPerSecond)
         }
 
     fun setAngle(setpoint: Double): Command =
         runOnce {
-            turnController.setpoint = setpoint.coerceIn(ManipConstants.MIN_ANGLE_RADS, ManipConstants.MAX_ANGLE_RADS)
+            wristTargetRads = setpoint.coerceIn(ManipConstants.MIN_ANGLE_RADS, ManipConstants.MAX_ANGLE_RADS)
+            io.setWristAngle(wristTargetRads)
         }
 
-    // does NOT freeze pivot
+    // does NOT freeze the wrist
     fun stopRoller(): Command =
         runOnce {
             io.setRollVoltage(0.0)
