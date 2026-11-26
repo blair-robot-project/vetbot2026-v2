@@ -7,7 +7,8 @@ import org.littletonrobotics.junction.Logger
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser
-import kotlin.io.path.Path
+import frc.team449.subsystems.drive.DriveSubsystem
+import frc.robot.lib.BLine.Path
 
 
 class BLineRoutines (
@@ -23,8 +24,8 @@ class BLineRoutines (
     private val baseBuilder =
         FollowPath.Builder(
             drive,
-            drive.pose2d,
-            drive.relativeSpeedsSupplier,
+            drive::pose,
+            drive::robotRelativeSpeeds,
             {speeds: ChassisSpeeds ->
                 drive.setControl(applySpeedsRequest.withSpeeds(speeds))
             },
@@ -35,7 +36,6 @@ class BLineRoutines (
 
     fun registerEventTriggers() {
         FollowPath.registerEventTrigger("start intake", ) //put command in once we have it
-        FollowPath.registerEventTrigger("outtake in depot") //put command in once we have it
         FollowPath.registerEventTrigger("put up intake") //put command in once we have it
     }
 
@@ -64,12 +64,13 @@ class BLineRoutines (
     }
 
     private fun carrotCakeOptimizer(): Command {
-        private val resetBuilder = baseBuilder.withPoseReset(drive::resetOdometry)
+        val resetBuilder = baseBuilder.withPoseReset(drive::resetOdometry)
 
         return Commands.sequence(
             //align drive modules
             resetBuilder.build(Path("startToIntakeCarrot.json")),
             baseBuilder.build(Path("carrotToOven.json")),
+            //outtake in oven w/ wait command of about 2 seconds
             baseBuilder.build(Path("ovenToRamp.json")),
             baseBuilder.build(Path("rampToTable.json"))
         )
