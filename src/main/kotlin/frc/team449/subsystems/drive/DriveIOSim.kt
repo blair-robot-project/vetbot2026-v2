@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.wpilibj.Notifier
+import frc.team449.Arena2026HarvestHavoc
 import frc.team449.Constants
 import frc.team449.Constants.DriveConstants
 import org.ironmaple.simulation.IntakeSimulation
@@ -63,7 +64,7 @@ class DriveIOSim(
 
     private val simNotifier =
         Notifier {
-            SimulatedArena.getInstance().simulationPeriodic()
+            Arena2026HarvestHavoc.simulationPeriodic()
 
             pigeon2.simState.setRawYaw(mapleSimDrive.simulatedDriveTrainPose.rotation.measure)
             pigeon2.simState.setAngularVelocityZ(
@@ -83,7 +84,7 @@ class DriveIOSim(
 
     private fun initializeSimulation() {
         SimulatedArena.overrideSimulationTimings(Seconds.of(1 / DriveConstants.ODOMETRY_LOOP_HZ), 1)
-        SimulatedArena.getInstance().addDriveTrainSimulation(mapleSimDrive)
+        Arena2026HarvestHavoc.addDriveTrainSimulation(mapleSimDrive)
 
         for (i in 0 until 4) {
             val realModule = this.getModule(i)

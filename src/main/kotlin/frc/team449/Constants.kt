@@ -51,7 +51,20 @@ object Constants {
 
     object FieldConstants {
         // --- FIELD DIMENSIONS ---
-        val FIELD_LENGTH_METERS = 648 * 0.0254
-        val FIELD_WIDTH_METERS = 324 * 0.0254
+        const val FIELD_LENGTH_METERS = 648 * 0.0254
+        const val FIELD_WIDTH_METERS = 324 * 0.0254
+
+        // --- FIELD ELEMENT DIMENSIONS ---
+        const val TABLE_LENGTH_METERS = 47 * 0.0254
+        const val RAMP_LENGTH_METERS = 90.750 * 0.0254
+        const val RAMP_HEIGHT_METERS = 24 * 0.0254
+        const val RAMP_WALL_DIST_METERS = 81.531 * 0.0254
+        const val PANTRY_LENGTH_METERS = 97 * 0.0254
+        const val PANTRY_HEIGHT_METERS = 7 * 0.0254
+        const val PANTRY_WALL_DIST_METERS = 12 * 0.0254
+        const val DEPOT_LENGTH_METERS = 5 * 0.0254
+        const val DEPOT_HEIGHT_METERS = 27 * 0.0254
+        const val DEPOT_WALL_DIST_VERT_METERS = 27.766 * 0.0254
+        const val DEPOT_WALL_DIST_HORIZ_METERS = 142.611 * 0.0254
     }
 }
