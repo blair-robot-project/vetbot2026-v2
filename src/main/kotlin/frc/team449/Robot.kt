@@ -1,12 +1,57 @@
 package frc.team449
 
+import com.ctre.phoenix6.SignalLogger
+import edu.wpi.first.hal.FRCNetComm
+import edu.wpi.first.hal.HAL
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import org.littletonrobotics.junction.LogFileUtil
+import org.littletonrobotics.junction.LoggedPowerDistribution
 import org.littletonrobotics.junction.LoggedRobot
+import org.littletonrobotics.junction.Logger
+import org.littletonrobotics.junction.networktables.NT4Publisher
+import org.littletonrobotics.junction.wpilog.WPILOGReader
+import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
 class Robot : LoggedRobot() {
     private val robotContainer = RobotContainer
 
-    override fun robotInit() {}
+    init {
+        println("Initializing Robot!")
+
+        HAL.report(FRCNetComm.tResourceType.kResourceType_Language, FRCNetComm.tInstances.kLanguage_Kotlin)
+        DriverStation.silenceJoystickConnectionWarning(true)
+
+        when (Constants.CURRENT_MODE) {
+            Constants.Mode.REAL -> {
+                Logger.addDataReceiver(WPILOGWriter())
+                Logger.addDataReceiver(NT4Publisher())
+            }
+
+            Constants.Mode.SIM -> {
+                Logger.addDataReceiver(NT4Publisher())
+            }
+
+            Constants.Mode.REPLAY -> {
+                this.setUseTiming(false) // run as fast as possible
+                val logPath: String = LogFileUtil.findReplayLog()
+                Logger.setReplaySource(WPILOGReader(logPath))
+                Logger.addDataReceiver(WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")))
+            }
+        }
+
+        // TODO: correct PDH CAN ID
+        LoggedPowerDistribution.getInstance(0, PowerDistribution.ModuleType.kRev)
+
+        SignalLogger.enableAutoLogging(false)
+        Logger.start()
+    }
+
+    override fun robotInit() {
+        robotContainer.bindings.setDefaultCommands()
+        robotContainer.bindings.bindControls()
+    }
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
@@ -17,7 +62,9 @@ class Robot : LoggedRobot() {
 
     override fun autonomousPeriodic() {}
 
-    override fun teleopInit() {}
+    override fun teleopInit() {
+        robotContainer.drive.setOperatorPerspectiveForward()
+    }
 
     override fun teleopPeriodic() {}
 }
