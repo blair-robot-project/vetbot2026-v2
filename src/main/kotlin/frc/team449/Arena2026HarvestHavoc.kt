@@ -4,32 +4,16 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
-import edu.wpi.first.math.kinematics.ChassisSpeeds
-import edu.wpi.first.networktables.BooleanPublisher
-import edu.wpi.first.networktables.DoublePublisher
 import edu.wpi.first.units.Units
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.DriverStation.Alliance
 import org.ironmaple.simulation.SimulatedArena
-import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnField
-import kotlin.math.sqrt
+import org.ironmaple.simulation.gamepieces.GamePieceProjectile
 
 object Arena2026HarvestHavoc : SimulatedArena(HarvestHavocFieldObstaclesMap) {
     var shouldClock: Boolean = true
 
     var clock: Double = 0.0
-    val blueIsOnClock: Boolean = Math.random() < 0.5
 
-    val phaseClockPublisher: DoublePublisher =
-        genericInfoTable.getDoubleTopic("Time left in current phase").publish()
-
-    val redActivePublisher: BooleanPublisher = redTable.getBooleanTopic("Red is active").publish()
-    val blueActivePublisher: BooleanPublisher = blueTable.getBooleanTopic("Blue is active").publish()
-
-    /** the obstacles on the 2026 competition field  */
     object HarvestHavocFieldObstaclesMap : FieldMap() {
         const val FIELD_WIDTH = Constants.FieldConstants.FIELD_LENGTH_METERS
         const val FIELD_HEIGHT = Constants.FieldConstants.FIELD_WIDTH_METERS
@@ -111,35 +95,15 @@ object Arena2026HarvestHavoc : SimulatedArena(HarvestHavocFieldObstaclesMap) {
             )
         }
     }
-    /**
-     *
-     *
-     * <h2>Creates an Arena for the 2026 FRC game rebuilt </h2>
-     *
-     *
-     * Due to the nature of maple sim they can not be fully simulated and so either must be non existent or treated
-     * as full colliders. This behavior can be changed with the AddRampCollider variable. Additionally due to
-     * performance issues the arena will not spawn all fuel by default. If you would like to change this use
-     * [.setEfficiencyMode]
-     *
-     * @param AddRampCollider Whether or not the ramps should be added as colliders.
-     */
-    /**
-     *
-     *
-     * <h2>Creates an Arena for the 2026 FRC game rebuilt </h2>
-     *
-     *
-     * This will create an Arena with the ramp areas marked as inaccessible. If you would like to change that use
-     * [.Arena2026Rebuilt]. Additionally due to performance issues the arena will not spawn all fuel by
-     * default. If you would like to change this use [.setEfficiencyMode]
-     */
+
     init {
         val settings = physicsWorld.getSettings()
 
         settings.setMinimumAtRestTime(0.02)
 
         physicsWorld.setSettings(settings)
+
+        resetFieldForAuto()
     }
 
     /**
@@ -193,16 +157,27 @@ object Arena2026HarvestHavoc : SimulatedArena(HarvestHavocFieldObstaclesMap) {
     }*/
 
     override fun placeGamePiecesOnField() {
-        // TODO: Implement
+        for (i in 0..4) {
+            var carrot: GamePieceProjectile =
+                CarrotOnField(
+                    Translation2d(Units.Inches.of(241.611), Units.Inches.of(78.0 + i * 42.0)),
+                    i != 0 && i != 4,
+                ).enableBecomesGamePieceOnFieldAfterTouchGround()
 
-        /*addGamePiece(
-            RebuiltFuelOnField(
-                     Translation2d(Units.Inches.of(5.991), Units.Inches.of(5.95)
-                 )
-            )
-        )*/
+            carrot.addGamePieceAfterTouchGround(this)
+            addGamePieceProjectile(carrot)
 
-        setupValueForMatchBreakdown("TotalFuelInOutpost")
+            carrot =
+                CarrotOnField(
+                    Translation2d(Units.Inches.of(648 - 241.611), Units.Inches.of(78.0 + i * 42.0)),
+                    i != 0 && i != 4,
+                ).enableBecomesGamePieceOnFieldAfterTouchGround()
+
+            carrot.addGamePieceAfterTouchGround(this)
+            addGamePieceProjectile(carrot)
+        }
+
+        setupValueForMatchBreakdown("CarrotsAreYummy")
     }
 
     @Synchronized
@@ -223,40 +198,9 @@ object Arena2026HarvestHavoc : SimulatedArena(HarvestHavocFieldObstaclesMap) {
             clock = 25.0
         }
 
-        phaseClockPublisher.set((clock))
-
         super.simulationSubTick(tickNum)
     }
 
-    /**
-     *
-     *
-     * <h2>Returns wether the specified team currently has an active HUB </h2>
-     *
-     * This function returns true during autonomous or when shouldClock (set by [.setShouldRunClock]) is
-     * false.
-     *
-     * @param isBlue Wether to check the blue or red alliance.
-     * @return Wether the specified alliance's HUB is currently active
-     */
-    fun isActive(isBlue: Boolean): Boolean {
-        if (isBlue) {
-            return blueIsOnClock || DriverStation.isAutonomous() || !shouldClock
-        } else {
-            return !blueIsOnClock || DriverStation.isAutonomous() || !shouldClock
-        }
-    }
-
-    /**
-     *
-     *
-     * <h2>Used to determine wether the arena should time which goal is active. </h2>
-     *
-     * When this is set too false both goals will always be set to active. Ths can be useful for testing or too simulate
-     * endgame.
-     *
-     * @param shouldRunClock
-     */
     fun setShouldRunClock(shouldRunClock: Boolean) {
         shouldClock = shouldRunClock
     }

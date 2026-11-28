@@ -3,6 +3,7 @@ package frc.team449.subsystems.drive
 import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveModulePosition
@@ -10,6 +11,7 @@ import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.util.struct.Struct
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.Field2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -18,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
+import frc.team449.Arena2026HarvestHavoc
 import frc.team449.Constants.DriveConstants
 import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrElse
@@ -46,6 +49,13 @@ class DriveSubsystem(
     val modulePositions: Array<SwerveModulePosition>
         get() = inputs.ModulePositions
 
+    val carrotPoses: Array<Array<Pose3d>>
+        get() = arrayOf(Arena2026HarvestHavoc
+            .getGamePiecesPosesByType("Carrot")
+            ?.filterNotNull()
+            ?.toTypedArray()
+            ?: emptyArray())
+
     private val translationCharacterizationRequest = SwerveRequest.SysIdSwerveTranslation()
     private val brakeRequest = SwerveRequest.SwerveDriveBrake()
     private val alignModulesRequest = SwerveRequest.PointWheelsAt()
@@ -56,6 +66,7 @@ class DriveSubsystem(
         field.robotPose = pose
 
         Logger.processInputs("Drive", inputs)
+        Logger.recordOutput("CarrotPoses", carrotPoses)
         Logger.recordOutput("Drive/ActiveCommand", currentCommand?.name ?: "None")
     }
 
